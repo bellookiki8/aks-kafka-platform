@@ -33,7 +33,8 @@ stages:
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
-                az acr login --name $(acrName)
+                ACR_TOKEN=$(az acr login --name $(acrName) --expose-token --query accessToken -o tsv)
+                echo "$ACR_TOKEN" | docker login $(acrLoginServer) --username 00000000-0000-0000-0000-000000000000 --password-stdin
                 for svc in producer consumer frontend; do
                   echo "Building $svc"
                   docker build -t $(acrLoginServer)/order-$svc:$(tag) ./app/$svc
