@@ -1,0 +1,5 @@
+﻿subscription_id = "your-subscription-id-here"
+location        = "westeurope"
+project         = "kafkaplatform"
+environment     = "dev"
+node_count      = 2
