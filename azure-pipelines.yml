@@ -1,4 +1,4 @@
-trigger:
+﻿trigger:
   branches:
     include:
       - main
@@ -54,89 +54,12 @@ stages:
               scriptLocation: inlineScript
               inlineScript: |
                 az aks get-credentials --resource-group $(resourceGroup) --name $(aksCluster) --overwrite-existing
-
                 echo "Ensuring the orders topic exists"
-                kubectl exec kafka-broker-0 -n kafka -- \
-                  kafka-topics.sh --create --if-not-exists \
-                  --topic orders --bootstrap-server localhost:9092 \
-                  --partitions 3 --replication-factor 2
-
+                kubectl exec kafka-broker-0 -n kafka -- kafka-topics.sh --create --if-not-exists --topic orders --bootstrap-server localhost:9092 --partitions 3 --replication-factor 2
                 echo "Updating images"
                 kubectl set image deployment/producer producer=$(acrLoginServer)/order-producer:$(tag) -n $(namespace)
                 kubectl set image deployment/consumer consumer=$(acrLoginServer)/order-consumer:$(tag) -n $(namespace)
                 kubectl set image deployment/frontend frontend=$(acrLoginServer)/order-frontend:$(tag) -n $(namespace)
-
-                echo "Waiting for rollouts"
-                kubectl rollout status deployment/producer -n $(namespace) --timeout=120s
-                kubectl rollout status deployment/consumer -n $(namespace) --timeout=120s
-                kubectl rollout status deployment/frontend -n $(namespace) --timeout=120strigger:
-  branches:
-    include:
-      - main
-  paths:
-    include:
-      - app/*
-      - k8s/*
-      - azure-pipelines.yml
-
-variables:
-  serviceConnection: 'azure-subscription'
-  acrName: 'acrkafkaplatformdev'
-  acrLoginServer: 'acrkafkaplatformdev.azurecr.io'
-  resourceGroup: 'rg-kafkaplatform-dev'
-  aksCluster: 'aks-kafkaplatform-dev'
-  namespace: 'orders'
-  tag: '$(Build.BuildId)'
-
-pool:
-  vmImage: 'ubuntu-latest'
-
-stages:
-  - stage: BuildAndPush
-    displayName: Build and push images
-    jobs:
-      - job: build
-        steps:
-          - task: AzureCLI@2
-            displayName: Build and push all three images
-            inputs:
-              azureSubscription: '$(serviceConnection)'
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                az acr login --name $(acrName)
-                for svc in producer consumer frontend; do
-                  echo "Building $svc"
-                  docker build -t $(acrLoginServer)/order-$svc:$(tag) ./app/$svc
-                  docker push $(acrLoginServer)/order-$svc:$(tag)
-                done
-
-  - stage: Deploy
-    displayName: Deploy to AKS
-    dependsOn: BuildAndPush
-    jobs:
-      - job: deploy
-        steps:
-          - task: AzureCLI@2
-            displayName: Ensure Kafka topic and deploy
-            inputs:
-              azureSubscription: '$(serviceConnection)'
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                az aks get-credentials --resource-group $(resourceGroup) --name $(aksCluster) --overwrite-existing
-
-                echo "Ensuring the orders topic exists"
-                kubectl exec kafka-broker-0 -n kafka -- \
-                  kafka-topics.sh --create --if-not-exists \
-                  --topic orders --bootstrap-server localhost:9092 \
-                  --partitions 3 --replication-factor 2
-
-                echo "Updating images"
-                kubectl set image deployment/producer producer=$(acrLoginServer)/order-producer:$(tag) -n $(namespace)
-                kubectl set image deployment/consumer consumer=$(acrLoginServer)/order-consumer:$(tag) -n $(namespace)
-                kubectl set image deployment/frontend frontend=$(acrLoginServer)/order-frontend:$(tag) -n $(namespace)
-
                 echo "Waiting for rollouts"
                 kubectl rollout status deployment/producer -n $(namespace) --timeout=120s
                 kubectl rollout status deployment/consumer -n $(namespace) --timeout=120s
