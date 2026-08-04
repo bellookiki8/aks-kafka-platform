@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer
+  namespace: orders
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consumer
+  template:
+    metadata:
+      labels:
+        app: consumer
+    spec:
+      containers:
+        - name: consumer
+          image: acrkafkaplatformdev.azurecr.io/order-consumer:v1
+          ports:
+            - containerPort: 3000
+          env:
+            - name: KAFKA_BROKER
+              value: "kafka.kafka.svc.cluster.local:9092"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: consumer
+  namespace: orders
+spec:
+  selector:
+    app: consumer
+  ports:
+    - port: 80
+      targetPort: 3000
+  type: ClusterIP
