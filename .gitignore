@@ -1,0 +1,28 @@
+﻿# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+# keep .terraform.lock.hcl (pins provider versions)
+
+# Node
+node_modules/
+npm-debug.log
+.env
+
+# Secrets and OS
+*.pem
+*.key
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
