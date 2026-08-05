@@ -37,7 +37,7 @@ spec:
 EOF
               for svc in producer consumer frontend; do
                 echo "Building $svc"
-                /kaniko/executor --context ./app/$svc --dockerfile ./app/$svc/Dockerfile --destination acrkafkaplatformdev.azurecr.io/order-$svc:${TAG}
+                /kaniko/executor --context ./app/$svc --dockerfile ./app/$svc/Dockerfile --destination acrkafkaplatformdev.azurecr.io/order-$svc:${TAG} --cache=false --single-snapshot --cleanup
               done
             '''
           }
@@ -57,9 +57,9 @@ EOF
               kubectl set image deployment/consumer consumer=acrkafkaplatformdev.azurecr.io/order-consumer:${TAG} -n ${NAMESPACE}
               kubectl set image deployment/frontend frontend=acrkafkaplatformdev.azurecr.io/order-frontend:${TAG} -n ${NAMESPACE}
               echo "Waiting for rollouts"
-              kubectl rollout status deployment/producer -n ${NAMESPACE} --timeout=120s
-              kubectl rollout status deployment/consumer -n ${NAMESPACE} --timeout=120s
-              kubectl rollout status deployment/frontend -n ${NAMESPACE} --timeout=120s
+              kubectl rollout status deployment/producer -n ${NAMESPACE} --timeout=180s
+              kubectl rollout status deployment/consumer -n ${NAMESPACE} --timeout=180s
+              kubectl rollout status deployment/frontend -n ${NAMESPACE} --timeout=180s
             '''
           }
         }
